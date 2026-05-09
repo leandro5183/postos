@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sempre Vidas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6fb;color:#1a1a2e;min-height:100vh}
+header{background:white;border-bottom:1px solid #e0e0e0;position:relative;height:80px;overflow:hidden}
+header .header-wave{position:absolute;top:0;left:0;height:80px;width:55%;object-fit:cover;object-position:left center}
+header .header-logo{position:absolute;right:20px;top:50%;transform:translateY(-50%);height:50px;object-fit:contain}
+.subheader{background:#1F3864;padding:8px 20px;display:flex;align-items:center;gap:10px}
+.subheader svg{width:18px;height:18px;flex-shrink:0}
+.subheader span{color:white;font-size:13px}
+.subheader strong{color:white;font-size:14px;font-weight:700}
+.container{max-width:1100px;margin:0 auto;padding:28px 20px}
+.filters-row{display:flex;gap:14px;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap}
+.filter-group{flex:1;min-width:160px}
+.filter-group label{display:block;font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+select{width:100%;padding:10px 14px;border:1.5px solid #d0daea;border-radius:8px;background:white;color:#1a1a2e;font-size:14px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%232E75B6' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+select:focus{outline:none;border-color:#2E75B6}
+.info-card{background:white;border:1.5px solid #d0daea;border-left:4px solid #2E75B6;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:none;flex-wrap:wrap;gap:32px}
+.info-card.show{display:flex}
+.info-item{display:flex;align-items:flex-start;gap:10px}
+.info-icon{width:32px;height:32px;border-radius:8px;background:#EBF3FC;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.info-label{font-size:11px;color:#7a8eaa;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.info-val{font-size:14px;color:#1a1a2e;margin-top:2px;line-height:1.4}
+.stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.stat{background:white;border:1px solid #e8eef6;border-radius:8px;padding:10px 16px;font-size:13px;color:#4a5a72}
+.stat strong{color:#1F3864;font-size:18px;display:block}
+.table-wrap{background:white;border-radius:12px;border:1px solid #d0daea;overflow:hidden;box-shadow:0 2px 8px rgba(31,56,100,.06)}
+table{width:100%;border-collapse:collapse}
+thead{background:#1F3864}
+th{color:white;font-size:12px;font-weight:600;text-align:left;padding:13px 16px;letter-spacing:.4px;text-transform:uppercase}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid #edf1f7;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f6f9fd}
+.nome-cell{font-weight:600;color:#1F3864;cursor:pointer}
+.nome-cell:hover{color:#2E75B6;text-decoration:underline}
+.posto-cell{color:#5a6e8a;font-size:12px}
+.tel-cell{color:#1a1a2e;font-weight:500}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-gestor{background:#FFF0DC;color:#8A4F00}
+.badge-diurno{background:#E3F5D8;color:#2D6A0A}
+.badge-noturno{background:#E0EDF9;color:#0C4E8C}
+.badge-func{background:#F0F4FA;color:#3A4F6E}
+.badge-folguista{background:#EDE9FC;color:#4C35A5}
+.badge-ferista{background:#FFE8F0;color:#8A0040}
+.badge-desligado{background:#FFE0E0;color:#8A0000}
+tr.desligado td{background:#fff5f5}
+tr.desligado .nome-cell{text-decoration:line-through;color:#cc0000}
+.btn-reset{background:none;border:1.5px solid #d0daea;border-radius:8px;padding:9px 16px;font-size:13px;color:#5a6e8a;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;align-self:flex-end}
+.btn-reset:hover{border-color:#2E75B6;color:#2E75B6}
+.modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:white;border-radius:14px;padding:28px;width:90%;max-width:420px;position:relative;border-top:4px solid #2E75B6}
+.modal-nome{font-size:22px;font-weight:700;color:#1F3864;margin-bottom:4px}
+.modal-posto{font-size:12px;color:#7a8eaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px}
+.modal-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #edf1f7}
+.modal-row:last-of-type{border-bottom:none}
+.modal-lbl{font-size:11px;font-weight:700;color:#7a8eaa;text-transform:uppercase;min-width:80px}
+.modal-val{font-size:14px;color:#1a1a2e;font-weight:500}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:#aaa;line-height:1}
+.modal-close:hover{color:#333}
+.btn-desligar{width:100%;margin-top:20px;padding:11px;border-radius:8px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-desligar.marcar{background:#FFE0E0;color:#8A0000}
+.btn-desligar.marcar:hover{background:#ffcaca}
+.btn-desligar.reativar{background:#E3F5D8;color:#2D6A0A}
+.btn-desligar.reativar:hover{background:#d0edbe}
+.senha-wrap{margin-top:16px;display:none}
+.senha-wrap input{width:100%;padding:10px;border:1.5px solid #d0daea;border-radius:8px;font-size:14px;text-align:center;letter-spacing:4px}
+.senha-wrap input:focus{outline:none;border-color:#2E75B6}
+.senha-err{color:#cc0000;font-size:12px;text-align:center;margin-top:6px;display:none}
+footer{text-align:center;padding:24px;font-size:12px;color:#aab4c4}
+@media(max-width:640px){.filters-row{flex-direction:column}.info-card.show{flex-direction:column;gap:14px}}
+</style>
+</head>
+<body>
+
+<header>
+  <img class="header-wave" src="data:image/png;base64,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" alt="">
+  <img class="header-logo" src="data:image/jpeg;base64,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" alt="Sempre Vidas">
+</header>
+<div class="subheader">
+  <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+  <div><strong>Sempre Vidas</strong> <span>— Consulta de equipes, turnos e contatos</span></div>
+</div>
+
+<div class="container">
+  <div class="filters-row">
+    <div class="filter-group"><label>Posto</label><select id="sel-posto" onchange="filtraPosto()"><option value="">— Selecione um posto —</option></select></div>
+    <div class="filter-group"><label>Função</label><select id="sel-funcao" onchange="filtraTabela()"><option value="">Todos</option><option value="Gestor">Gestores</option><option value="Funcionário">Funcionários</option><option value="Folguista">Folguistas</option><option value="Ferista">Feristas</option></select></div>
+    <div class="filter-group"><label>Turno</label><select id="sel-turno" onchange="filtraTabela()"><option value="">Todos os turnos</option><option value="Diurno">Diurno</option><option value="Noturno">Noturno</option></select></div>
+    <button class="btn-reset" onclick="resetFiltros()">↺ Limpar</button>
+  </div>
+
+  <div class="info-card" id="info-card">
+    <div class="info-item">
+      <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#2E75B6" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div><div class="info-label">Endereço</div><div class="info-val" id="info-end">—</div></div>
+    </div>
+    <div class="info-item">
+      <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#2E75B6" stroke-width="2" width="16" height="16"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.03 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+      <div><div class="info-label">Tel. Corporativo</div><div class="info-val" id="info-tel">—</div></div>
+    </div>
+  </div>
+
+  <div class="stats" id="stats" style="display:none">
+    <div class="stat"><strong id="st-total">0</strong>Total</div>
+    <div class="stat"><strong id="st-gest">0</strong>Gestores</div>
+    <div class="stat"><strong id="st-diur">0</strong>Diurno</div>
+    <div class="stat"><strong id="st-notu">0</strong>Noturno</div>
+    <div class="stat"><strong id="st-folg">0</strong>Folguistas</div>
+    <div class="stat"><strong id="st-feri">0</strong>Feristas</div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Nome</th><th>Posto</th><th>Função</th><th>Turno</th><th>Telefone</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg" onclick="fecharModalBg(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-bg').classList.remove('show')">×</button>
+    <div class="modal-nome" id="m-nome"></div>
+    <div class="modal-posto" id="m-posto"></div>
+    <div class="modal-row"><span class="modal-lbl">Função</span><span class="modal-val" id="m-funcao"></span></div>
+    <div class="modal-row"><span class="modal-lbl">Turno</span><span class="modal-val" id="m-turno"></span></div>
+    <div class="modal-row"><span class="modal-lbl">Telefone</span><span class="modal-val" id="m-tel"></span></div>
+    <button class="btn-desligar marcar" id="btn-desligar" onclick="pedirSenha()">🔴 Marcar como desligado</button>
+    <div class="senha-wrap" id="senha-wrap">
+      <input type="password" id="campo-senha" placeholder="Digite a senha" onkeydown="if(event.key==='Enter')confirmarSenha()">
+      <div class="senha-err" id="senha-err">Senha incorreta. Tente novamente.</div>
+      <button class="btn-desligar marcar" style="margin-top:10px" onclick="confirmarSenha()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<footer>Sempre Vidas · Atualizado em maio de 2025</footer>
+
+<script>
+const postos = {
+  "ARQUIVO":                {end:"R. Voluntários da Pátria, 596 - Santana, SP, 02010-000", tel:"11 91297-7538"},
+  "BSP BARRA FUNDA":        {end:"R. do Bosque, 1260 - Barra Funda, SP, 01136-001", tel:"11 96374-8401"},
+  "BSP HABITAT":            {end:"Av. Angélica, 2529 - Bela Vista, SP, 01227-200", tel:"11 91897-5874"},
+  "CENTRAL TÉCNICA":        {end:"Rua Pascoal Ranieri, 75 - Canindé, SP, 03034-060", tel:"—"},
+  "CEU ANHAGUERA":          {end:"R. Pedro José de Lima, 1020 - Anhanguera, SP, 05267-174", tel:"11 91552-9536"},
+  "CEU ATLÂNTICO":          {end:"R. Cel. José Venâncio Dias, 840 - Vila Jaraguá, SP, 05160-030", tel:"11 97318-0434"},
+  "CEU BRISTOL":            {end:"R. Prof. Artur Primavesi - Parque Bristol, SP, 04177-070", tel:"11 93467-8653"},
+  "CEU FREGUESIA DO Ó":     {end:"R. Crespo de Carvalho, 71 - Freguesia do Ó, SP, 02832-240", tel:"11 91975-5510"},
+  "CEU HELIÓPOLIS":         {end:"Estr. das Lágrimas, 2385 - São João Climaco, SP, 04244-000", tel:"11 99580-2424"},
+  "CEU JAÇANÃ":             {end:"R. Francisca Espósito Tonetti, 105 - Jardim Guapira, SP, 02276-010", tel:"11 91703-5526"},
+  "CEU JAGUARÉ":            {end:"Av. Kenkiti Simomoto, 80 - Jaguaré, SP, 05347-010", tel:"19 97136-4616"},
+  "CEU MENINOS":            {end:"R. Barbinos, 111 - São João Climaco, SP, 04240-110", tel:"11 93370-1340"},
+  "CEU PAULISTANO":         {end:"R. Aparecida do Taboado, S/N - Jardim Paulistano, SP, 02814-000", tel:"11 91975-3881"},
+  "CEU PAZ":                {end:"Rua Daniel Cerri, 1549 - Jardim Paraná, SP, 02876-170", tel:"11 99962-8251"},
+  "CEU PERAMARMELO":        {end:"Rua Pêra-Marmelo, 226 - Jd. Santa Lucrecia, SP, 05185-420", tel:"11 99959-7839"},
+  "CEU PERUS":              {end:"R. Bernardo José de Lorena, S/N - Vila Fanton, SP, 05203-200", tel:"11 95055-6273"},
+  "CEU PINHEIRINHO":        {end:"Rua Camillo Zanotti - Jaraguá, SP, 02998-080", tel:"11 91975-5565"},
+  "CEU PINHEIRINHO D'ÁGUA": {end:"A completar", tel:"—"},
+  "CEU PQ NOVO MUNDO":      {end:"Av. Ernesto Augusto Lopes, 100 - Parque Vila Maria, SP, 02169-030", tel:"11 91107-1746"},
+  "CEU TAIPAS":             {end:"R. João Amado Coutinho, 240 - Conj. Res. Elisio Teixeira Leite, SP, 02815-000", tel:"11 91975-5790"},
+  "CEU TREMEMBÉ":           {end:"R. Adauto Bezerra Delgado, 94 - Parque Casa de Pedra, SP, 02320-110", tel:"11 99872-1335"},
+  "CEU VILA ALPINA":        {end:"Rua João Pedro Lecór, 144 - Vila Alpina, SP, 03227-190", tel:"11 91776-4115"},
+  "CPFL CAMPINAS":          {end:"R. Jorge de Figueiredo Corrêa, 1632 - Chácara Primavera, Campinas, 13088-140", tel:"19 99787-9789"},
+  "CULT":                   {end:"Rua Três Rios, 343 - Bom Retiro, SP, 01123-000", tel:"11 99599-2887"},
+  "HSPM":                   {end:"R. Castro Alves, 60 - Aclimação, SP, 01532-000", tel:"11 97092-3259"},
+  "IAMSPE":                 {end:"Rua Pedro de Toledo, 1800", tel:"A completar"},
+  "MUSEU DAS FAVELAS":      {end:"Largo Páteo do Colégio, 148 - Centro Histórico, SP", tel:"11 91612-6935"},
+  "POLÍCIA DHPP":           {end:"R. Brg. Tobias, 527 - Luz, SP, 01032-001", tel:"11 99522-4129"},
+  "SALA SÃO PAULO":         {end:"Praça Júlio Prestes, 16 - Campos Elíseos / Rua Mauá, 51, SP", tel:"11 99607-3583"},
+  "THEATRO MUNICIPAL":      {end:"Praça Ramos de Azevedo, s/n - República, SP, 01037-010", tel:"A completar"},
+};
+
+const equipe = [
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Ariane Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 94968-5224"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Badreddine Fakir",   funcao:"Funcionário", turno:"Noturno", tel:"11 98441-7132"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Jéssika",            funcao:"Gestor",      turno:"—",       tel:"11 96173-0753"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Robson Soares",      funcao:"Funcionário", turno:"Diurno",  tel:"11 99798-3432"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Vagner Alves",       funcao:"Funcionário", turno:"Diurno",  tel:"11 98517-9761"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Wellington Moura",   funcao:"Funcionário", turno:"Noturno", tel:"11 96021-1652"},
+  {posto:"CEU JAÇANÃ", nome:"Carlos Eduardo",   funcao:"Funcionário", turno:"Diurno",  tel:"11 96014-3768"},
+  {posto:"CEU JAÇANÃ", nome:"Dona Sandra",      funcao:"Gestor",      turno:"—",       tel:"11 98577-7947"},
+  {posto:"CEU JAÇANÃ", nome:"Douglas Pedroso",  funcao:"Funcionário", turno:"Noturno", tel:"11 98340-7265"},
+  {posto:"CEU JAÇANÃ", nome:"Izabelle Brito",   funcao:"Funcionário", turno:"Noturno", tel:"11 98308-6865"},
+  {posto:"CEU JAÇANÃ", nome:"Nelcilio Pires",   funcao:"Funcionário", turno:"Diurno",  tel:"11 98065-8345"},
+  {posto:"CEU TREMEMBÉ", nome:"Dona Sônia",          funcao:"Gestor",      turno:"—",       tel:"11 93086-5437"},
+  {posto:"CEU TREMEMBÉ", nome:"Gilvan Lopes",        funcao:"Funcionário", turno:"Diurno",  tel:"11 96320-8094"},
+  {posto:"CEU TREMEMBÉ", nome:"João Marinho",        funcao:"Funcionário", turno:"Noturno", tel:"11 95371-5810"},
+  {posto:"CEU TREMEMBÉ", nome:"Monique Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 96532-2131"},
+  {posto:"CEU TREMEMBÉ", nome:"Noildon Santos",      funcao:"Funcionário", turno:"Diurno",  tel:"11 96693-1097"},
+  {posto:"CEU TREMEMBÉ", nome:"Susana Mendonça",     funcao:"Funcionário", turno:"Noturno", tel:"11 95692-3423"},
+  {posto:"CEU TREMEMBÉ", nome:"Thiago Macedo",       funcao:"Funcionário", turno:"Noturno", tel:"11 98403-5097"},
+  {posto:"CEU TAIPAS", nome:"Anderson Brito",     funcao:"Funcionário", turno:"Diurno",  tel:"11 96523-0428"},
+  {posto:"CEU TAIPAS", nome:"Claudionor Santos",  funcao:"Funcionário", turno:"Noturno", tel:"11 96976-7374"},
+  {posto:"CEU TAIPAS", nome:"Diego Souza",        funcao:"Funcionário", turno:"Noturno", tel:"11 92663-2897"},
+  {posto:"CEU TAIPAS", nome:"Dona Olivia",        funcao:"Gestor",      turno:"—",       tel:"11 97215-5259"},
+  {posto:"CEU TAIPAS", nome:"Lucas Lopes",        funcao:"Funcionário", turno:"Diurno",  tel:"11 99192-8289"},
+  {posto:"CEU TAIPAS", nome:"Silvia Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 98612-3256"},
+  {posto:"CEU PAULISTANO", nome:"André Malta",      funcao:"Funcionário", turno:"Diurno",  tel:"11 94741-3164"},
+  {posto:"CEU PAULISTANO", nome:"Elias Costa",      funcao:"Funcionário", turno:"Noturno", tel:"11 94022-9241"},
+  {posto:"CEU PAULISTANO", nome:"Evandro",          funcao:"Gestor",      turno:"—",       tel:"11 99163-4992"},
+  {posto:"CEU PAULISTANO", nome:"Geni Aparecida",   funcao:"Funcionário", turno:"Noturno", tel:"11 98874-3063"},
+  {posto:"CEU PAULISTANO", nome:"Jeremias Rocha",   funcao:"Funcionário", turno:"Diurno",  tel:"11 98876-0472"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Antony Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 91700-0136"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Dona Solange",       funcao:"Gestor",      turno:"—",       tel:"11 99734-6928"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Elaine Azevedo",     funcao:"Funcionário", turno:"Diurno",  tel:"11 95424-0464"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Gabriel Camargo",    funcao:"Funcionário", turno:"Diurno",  tel:"11 97653-7838"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"João Blask",         funcao:"Funcionário", turno:"Noturno", tel:"11 97098-9650"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Mario Luiz",         funcao:"Funcionário", turno:"Noturno", tel:"11 94612-8613"},
+  {posto:"CEU PERUS", nome:"Adriana",   funcao:"Gestor",      turno:"—",       tel:"11 98575-1725"},
+  {posto:"CEU PERUS", nome:"Aquino",    funcao:"Funcionário", turno:"Noturno", tel:"11 96152-3328"},
+  {posto:"CEU PERUS", nome:"Erisvan",   funcao:"Funcionário", turno:"Noturno", tel:"11 96710-5875"},
+  {posto:"CEU PERUS", nome:"Júlio",     funcao:"Funcionário", turno:"Diurno",  tel:"11 98456-7977"},
+  {posto:"CEU PERUS", nome:"Leonardo",  funcao:"Funcionário", turno:"Diurno",  tel:"11 99219-4797"},
+  {posto:"CEU JAGUARÉ", nome:"Ivan",            funcao:"Funcionário", turno:"Noturno", tel:"11 98379-6118"},
+  {posto:"CEU JAGUARÉ", nome:"Lucas Quintino",  funcao:"Funcionário", turno:"Diurno",  tel:"11 99483-5852"},
+  {posto:"CEU JAGUARÉ", nome:"Osias",           funcao:"Funcionário", turno:"Noturno", tel:"11 99689-8278"},
+  {posto:"CEU JAGUARÉ", nome:"Paloma",          funcao:"Gestor",      turno:"—",       tel:"11 97381-1645"},
+  {posto:"CEU JAGUARÉ", nome:"William",         funcao:"Funcionário", turno:"Diurno",  tel:"11 95108-6459"},
+  {posto:"CEU PERAMARMELO", nome:"Claudia",  funcao:"Funcionário", turno:"Diurno",  tel:"11 96568-2503"},
+  {posto:"CEU PERAMARMELO", nome:"Édson",    funcao:"Funcionário", turno:"Diurno",  tel:"11 93913-2662"},
+  {posto:"CEU PERAMARMELO", nome:"Fernando", funcao:"Funcionário", turno:"Noturno", tel:"11 91322-9034"},
+  {posto:"CEU PERAMARMELO", nome:"Hélio",    funcao:"Gestor",      turno:"—",       tel:"11 97077-7487"},
+  {posto:"CEU PERAMARMELO", nome:"Viera",    funcao:"Funcionário", turno:"Noturno", tel:"11 97610-8515"},
+  {posto:"CEU ATLÂNTICO", nome:"Aleandro",  funcao:"Funcionário", turno:"Diurno",  tel:"11 98958-8405"},
+  {posto:"CEU ATLÂNTICO", nome:"Flaudimir", funcao:"Funcionário", turno:"Noturno", tel:"11 98015-2969"},
+  {posto:"CEU ATLÂNTICO", nome:"Gabriel",   funcao:"Funcionário", turno:"Diurno",  tel:"11 94070-8621"},
+  {posto:"CEU ATLÂNTICO", nome:"Isamara",   funcao:"Gestor",      turno:"—",       tel:"11 98383-8979"},
+  {posto:"CEU ATLÂNTICO", nome:"Milton",    funcao:"Funcionário", turno:"Noturno", tel:"11 93144-1466"},
+  {posto:"CEU ANHAGUERA", nome:"Alice",     funcao:"Gestor",      turno:"—",       tel:"11 96666-3219"},
+  {posto:"CEU ANHAGUERA", nome:"Cristiane", funcao:"Funcionário", turno:"Noturno", tel:"11 96037-5956"},
+  {posto:"CEU ANHAGUERA", nome:"Dalton",    funcao:"Funcionário", turno:"Diurno",  tel:"11 95705-6464"},
+  {posto:"CEU ANHAGUERA", nome:"Márcio",    funcao:"Funcionário", turno:"Diurno",  tel:"11 96666-2955"},
+  {posto:"CEU ANHAGUERA", nome:"Osmando",   funcao:"Funcionário", turno:"Noturno", tel:"11 98963-2161"},
+  {posto:"CEU PAZ", nome:"Cristiano",  funcao:"Funcionário", turno:"Diurno",  tel:"11 97365-0378"},
+  {posto:"CEU PAZ", nome:"Mauricio",   funcao:"Gestor",      turno:"—",       tel:"11 98373-8169"},
+  {posto:"CEU PAZ", nome:"Mônica",     funcao:"Funcionário", turno:"Noturno", tel:"11 95277-2086"},
+  {posto:"CEU PAZ", nome:"Raphael",    funcao:"Funcionário", turno:"Noturno", tel:"11 98569-0902"},
+  {posto:"CEU PAZ", nome:"Wellington", funcao:"Funcionário", turno:"Diurno",  tel:"11 96796-0023"},
+  {posto:"CEU MENINOS", nome:"Alex Miller",     funcao:"Funcionário", turno:"Diurno",  tel:"11 98182-4759"},
+  {posto:"CEU MENINOS", nome:"Dona Sônia",      funcao:"Gestor",      turno:"—",       tel:"11 98918-6248"},
+  {posto:"CEU MENINOS", nome:"Fernando César",  funcao:"Funcionário", turno:"Diurno",  tel:"11 96354-4561"},
+  {posto:"CEU MENINOS", nome:"José Wilson",     funcao:"Funcionário", turno:"Noturno", tel:"11 98244-4291"},
+  {posto:"CEU MENINOS", nome:"Letícia",         funcao:"Funcionário", turno:"Noturno", tel:"11 94861-8546"},
+  {posto:"CEU HELIÓPOLIS", nome:"Claudinha",     funcao:"Gestor",      turno:"—",       tel:"11 98418-0249"},
+  {posto:"CEU HELIÓPOLIS", nome:"Jackson",       funcao:"Funcionário", turno:"Noturno", tel:"11 96235-5484"},
+  {posto:"CEU HELIÓPOLIS", nome:"Ricardo Alves", funcao:"Funcionário", turno:"Diurno",  tel:"11 99226-9630"},
+  {posto:"CEU HELIÓPOLIS", nome:"Talita",        funcao:"Funcionário", turno:"Diurno",  tel:"11 95719-1747"},
+  {posto:"CEU HELIÓPOLIS", nome:"Thiago Reis",   funcao:"Funcionário", turno:"Noturno", tel:"11 99506-5273"},
+  {posto:"CEU BRISTOL", nome:"Andréia",       funcao:"Gestor",      turno:"—",       tel:"11 98932-0606"},
+  {posto:"CEU BRISTOL", nome:"Everlando",     funcao:"Funcionário", turno:"Diurno",  tel:"11 96492-2891"},
+  {posto:"CEU BRISTOL", nome:"Fábio",         funcao:"Funcionário", turno:"Diurno",  tel:"11 91423-4382"},
+  {posto:"CEU BRISTOL", nome:"Luciano",       funcao:"Funcionário", turno:"Noturno", tel:"11 94156-0945"},
+  {posto:"CEU BRISTOL", nome:"Marco Aurélio", funcao:"Funcionário", turno:"Noturno", tel:"11 94719-7234"},
+  {posto:"CEU VILA ALPINA", nome:"Alexandre",   funcao:"Funcionário", turno:"Diurno",  tel:"11 95126-0833"},
+  {posto:"CEU VILA ALPINA", nome:"Alexsandre",  funcao:"Funcionário", turno:"Noturno", tel:"11 94008-5741"},
+  {posto:"CEU VILA ALPINA", nome:"Caio",        funcao:"Funcionário", turno:"Noturno", tel:"11 98392-9962"},
+  {posto:"CEU VILA ALPINA", nome:"Elisângela",  funcao:"Funcionário", turno:"Diurno",  tel:"11 94804-1371"},
+  {posto:"CEU VILA ALPINA", nome:"Roberto",     funcao:"Gestor",      turno:"—",       tel:"11 98081-1327"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Alexsander",       funcao:"Funcionário", turno:"Noturno", tel:"11 97716-7283"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Daniel Gonçalves", funcao:"Funcionário", turno:"Noturno", tel:"11 96524-1501"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Eduardo",          funcao:"Gestor",      turno:"—",       tel:"11 96751-3716"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Gilson",           funcao:"Funcionário", turno:"Diurno",  tel:"11 96083-6942"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Jandira",          funcao:"Gestor",      turno:"—",       tel:"11 98785-6860"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"William",          funcao:"Funcionário", turno:"Diurno",  tel:"11 96034-4998"},
+  {posto:"FOLGUISTAS", nome:"Diogenes",     funcao:"Folguista", turno:"—",       tel:"11 95989-5629"},
+  {posto:"FOLGUISTAS", nome:"Lucas Moreno", funcao:"Folguista", turno:"Diurno",  tel:"11 97295-5587"},
+  {posto:"FOLGUISTAS", nome:"Renato",       funcao:"Folguista", turno:"Noturno", tel:"11 95444-869"},
+  {posto:"FERISTAS", nome:"Andressa", funcao:"Ferista", turno:"—", tel:"11 97788-9783"},
+  {posto:"FERISTAS", nome:"Gilmara",  funcao:"Ferista", turno:"—", tel:"11 96509-6732"},
+];
+
+const SENHA="9090";
+let desligados=JSON.parse(localStorage.getItem('sv_desligados')||'[]');
+let modalIdx=-1;
+
+const sel=document.getElementById('sel-posto');
+[...Object.keys(postos).sort(),"FOLGUISTAS","FERISTAS"].forEach(p=>{
+  const o=document.createElement('option');
+  o.value=p;o.textContent=p;sel.appendChild(o);
+});
+
+function filtraPosto(){
+  const p=document.getElementById('sel-posto').value;
+  const card=document.getElementById('info-card');
+  if(p&&postos[p]){
+    document.getElementById('info-end').textContent=postos[p].end;
+    document.getElementById('info-tel').textContent=postos[p].tel;
+    card.classList.add('show');
+  }else{card.classList.remove('show');}
+  filtraTabela();
+}
+
+function filtraTabela(){
+  const posto=document.getElementById('sel-posto').value;
+  const funcao=document.getElementById('sel-funcao').value;
+  const turno=document.getElementById('sel-turno').value;
+  const tbody=document.getElementById('tbody');
+  const stats=document.getElementById('stats');
+  let dados=equipe.map((r,i)=>({...r,idx:i})).filter(r=>{
+    if(posto&&r.posto!==posto)return false;
+    if(funcao&&r.funcao!==funcao)return false;
+    if(turno&&r.turno!==turno)return false;
+    return true;
+  }).sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
+  if(dados.length>0){
+    stats.style.display='flex';
+    document.getElementById('st-total').textContent=dados.length;
+    document.getElementById('st-gest').textContent=dados.filter(r=>r.funcao==='Gestor').length;
+    document.getElementById('st-diur').textContent=dados.filter(r=>r.turno==='Diurno').length;
+    document.getElementById('st-notu').textContent=dados.filter(r=>r.turno==='Noturno').length;
+    document.getElementById('st-folg').textContent=dados.filter(r=>r.funcao==='Folguista').length;
+    document.getElementById('st-feri').textContent=dados.filter(r=>r.funcao==='Ferista').length;
+  }else{stats.style.display='none';}
+  if(!dados.length){
+    tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:40px;color:#8a9bb5">Nenhum registro encontrado.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=dados.map(r=>{
+    const desl=desligados.includes(r.idx);
+    const bfunc=r.funcao==='Gestor'?'<span class="badge badge-gestor">Gestor(a)</span>':r.funcao==='Folguista'?'<span class="badge badge-folguista">Folguista</span>':r.funcao==='Ferista'?'<span class="badge badge-ferista">Ferista</span>':'<span class="badge badge-func">Funcionário(a)</span>';
+    const bturno=r.turno==='Diurno'?'<span class="badge badge-diurno">Diurno</span>':r.turno==='Noturno'?'<span class="badge badge-noturno">Noturno</span>':'<span style="color:#aaa;font-size:12px">—</span>';
+    const dBadge=desl?' <span class="badge badge-desligado">Desligado</span>':'';
+    return `<tr class="${desl?'desligado':''}"><td class="nome-cell" onclick="abrirModal(${r.idx})">${r.nome}${dBadge}</td><td class="posto-cell">${r.posto}</td><td>${bfunc}</td><td>${bturno}</td><td class="tel-cell">${r.tel}</td></tr>`;
+  }).join('');
+}
+
+function abrirModal(idx){
+  const r=equipe[idx];
+  modalIdx=idx;
+  document.getElementById('m-nome').textContent=r.nome;
+  document.getElementById('m-posto').textContent=r.posto;
+  document.getElementById('m-funcao').textContent=r.funcao;
+  document.getElementById('m-turno').textContent=r.turno==='—'?'Não definido':r.turno;
+  document.getElementById('m-tel').textContent=r.tel;
+  const desl=desligados.includes(idx);
+  const btn=document.getElementById('btn-desligar');
+  btn.textContent=desl?'✅ Reativar funcionário':'🔴 Marcar como desligado';
+  btn.className='btn-desligar '+(desl?'reativar':'marcar');
+  document.getElementById('senha-wrap').style.display='none';
+  document.getElementById('campo-senha').value='';
+  document.getElementById('senha-err').style.display='none';
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function fecharModalBg(e){if(e.target.id==='modal-bg')document.getElementById('modal-bg').classList.remove('show');}
+
+function pedirSenha(){
+  const sw=document.getElementById('senha-wrap');
+  sw.style.display=sw.style.display==='none'?'block':'none';
+  if(sw.style.display==='block')document.getElementById('campo-senha').focus();
+}
+
+function confirmarSenha(){
+  const val=document.getElementById('campo-senha').value;
+  const err=document.getElementById('senha-err');
+  if(val===SENHA){
+    err.style.display='none';
+    const i=desligados.indexOf(modalIdx);
+    if(i===-1)desligados.push(modalIdx);
+    else desligados.splice(i,1);
+    localStorage.setItem('sv_desligados',JSON.stringify(desligados));
+    document.getElementById('modal-bg').classList.remove('show');
+    filtraTabela();
+  }else{
+    err.style.display='block';
+    document.getElementById('campo-senha').value='';
+    document.getElementById('campo-senha').focus();
+  }
+}
+
+function resetFiltros(){
+  document.getElementById('sel-posto').value='';
+  document.getElementById('sel-funcao').value='';
+  document.getElementById('sel-turno').value='';
+  document.getElementById('info-card').classList.remove('show');
+  document.getElementById('stats').style.display='none';
+  filtraTabela();
+}
+
+filtraTabela();
+</script>
+</body>
+</html>
