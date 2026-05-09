@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consulta de Postos e Equipes</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f4f6fb; color: #1a1a2e; min-height: 100vh; }
+
+  header {
+    background: linear-gradient(135deg, #1F3864, #2E75B6);
+    color: white;
+    padding: 24px 32px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  header svg { width: 36px; height: 36px; opacity: 0.9; }
+  header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.3px; }
+  header p { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .filter-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #2E75B6;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+  select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #d0daea;
+    border-radius: 8px;
+    background: white;
+    color: #1a1a2e;
+    font-size: 14px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%232E75B6' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    transition: border-color 0.2s;
+  }
+  select:focus { outline: none; border-color: #2E75B6; box-shadow: 0 0 0 3px rgba(46,117,182,0.12); }
+
+  .info-card {
+    background: white;
+    border: 1.5px solid #d0daea;
+    border-left: 4px solid #2E75B6;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: none;
+    animation: fadeIn 0.2s ease;
+  }
+  .info-card.show { display: flex; gap: 32px; flex-wrap: wrap; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .info-item { display: flex; align-items: flex-start; gap: 10px; }
+  .info-icon { width: 32px; height: 32px; border-radius: 8px; background: #EBF3FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .info-icon svg { width: 16px; height: 16px; color: #2E75B6; }
+  .info-label { font-size: 11px; color: #7a8eaa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .info-val { font-size: 14px; color: #1a1a2e; margin-top: 2px; line-height: 1.4; }
+
+  .stats { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: white; border: 1px solid #e8eef6; border-radius: 8px; padding: 10px 16px; font-size: 13px; color: #4a5a72; }
+  .stat strong { color: #1F3864; font-size: 18px; display: block; }
+
+  .table-wrap { background: white; border-radius: 12px; border: 1px solid #d0daea; overflow: hidden; box-shadow: 0 2px 8px rgba(31,56,100,0.06); }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: #1F3864; }
+  th { color: white; font-size: 12px; font-weight: 600; text-align: left; padding: 13px 16px; letter-spacing: 0.4px; text-transform: uppercase; }
+  td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #edf1f7; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f6f9fd; }
+
+  .nome-cell { font-weight: 600; color: #1a1a2e; }
+  .posto-cell { color: #5a6e8a; font-size: 12px; }
+  .tel-cell { color: #2E75B6; font-size: 13px; font-weight: 500; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+  .badge-gestor  { background: #EDE9FC; color: #4C35A5; }
+  .badge-diurno  { background: #E3F5D8; color: #2D6A0A; }
+  .badge-noturno { background: #E0EDF9; color: #0C4E8C; }
+
+  .empty { text-align: center; padding: 48px 20px; color: #8a9bb5; }
+  .empty svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty p { font-size: 14px; }
+
+  .btn-reset {
+    background: none;
+    border: 1.5px solid #d0daea;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    color: #5a6e8a;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+    align-self: flex-end;
+  }
+  .btn-reset:hover { border-color: #2E75B6; color: #2E75B6; }
+
+  .filters-row { display: flex; gap: 14px; align-items: flex-end; margin-bottom: 20px; }
+  .filters-row .filter-group { flex: 1; }
+
+  footer { text-align: center; padding: 24px; font-size: 12px; color: #aab4c4; }
+
+  @media (max-width: 640px) {
+    .filters-row { flex-direction: column; }
+    .info-card.show { flex-direction: column; gap: 14px; }
+    .stats { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+    <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+    <path d="M9 21V12h6v9"/>
+  </svg>
+  <div>
+    <h1>Gestores dos Postos</h1>
+    <p>Consulta de equipes, turnos e contatos</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="filters-row">
+    <div class="filter-group">
+      <label>Posto</label>
+      <select id="sel-posto" onchange="filtraPosto()">
+        <option value="">— Selecione um posto —</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Função</label>
+      <select id="sel-funcao" onchange="filtraTabela()">
+        <option value="">Todos</option>
+        <option value="Gestor">Somente gestores</option>
+        <option value="Funcionário">Somente funcionários</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Turno</label>
+      <select id="sel-turno" onchange="filtraTabela()">
+        <option value="">Todos os turnos</option>
+        <option value="Diurno">Diurno</option>
+        <option value="Noturno">Noturno</option>
+      </select>
+    </div>
+    <button class="btn-reset" onclick="resetFiltros()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      Limpar
+    </button>
+  </div>
+
+  <div class="info-card" id="info-card">
+    <div class="info-item">
+      <div class="info-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2E75B6" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <div>
+        <div class="info-label">Endereço</div>
+        <div class="info-val" id="info-end">—</div>
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="info-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2E75B6" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.03 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      </div>
+      <div>
+        <div class="info-label">Tel. Corporativo</div>
+        <div class="info-val" id="info-tel">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats" id="stats" style="display:none">
+    <div class="stat"><strong id="stat-total">0</strong>Total</div>
+    <div class="stat"><strong id="stat-gestores">0</strong>Gestores</div>
+    <div class="stat"><strong id="stat-diurno">0</strong>Diurno</div>
+    <div class="stat"><strong id="stat-noturno">0</strong>Noturno</div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Posto</th>
+          <th>Função</th>
+          <th>Turno</th>
+          <th>Telefone</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<footer>Atualizado em maio de 2025 · Gestores dos Postos</footer>
+
+<script>
+const postos = {
+  "ARQUIVO":                {end:"R. Voluntários da Pátria, 596 - Santana, São Paulo - SP, 02010-000", tel:"11 91297-7538"},
+  "BSP BARRA FUNDA":        {end:"R. do Bosque, 1260 - Barra Funda, São Paulo - SP, 01136-001", tel:"11 96374-8401"},
+  "BSP HABITAT":            {end:"Av. Angélica, 2529 - Bela Vista, São Paulo - SP, 01227-200", tel:"11 91897-5874"},
+  "CENTRAL TÉCNICA":        {end:"Rua Pascoal Ranieri, 75 - Canindé, São Paulo - SP, 03034-060", tel:"—"},
+  "CEU ANHAGUERA":          {end:"R. Pedro José de Lima, 1020 - Anhanguera, São Paulo - SP, 05267-174", tel:"11 91552-9536"},
+  "CEU ATLÂNTICO":          {end:"R. Cel. José Venâncio Dias, 840 - Vila Jaraguá, São Paulo - SP, 05160-030", tel:"11 97318-0434"},
+  "CEU BRISTOL":            {end:"R. Prof. Artur Primavesi - Parque Bristol, São Paulo - SP, 04177-070", tel:"11 93467-8653"},
+  "CEU FREGUESIA DO Ó":     {end:"R. Crespo de Carvalho, 71 - Freguesia do Ó, São Paulo - SP, 02832-240", tel:"11 91975-5510"},
+  "CEU HELIÓPOLIS":         {end:"Estr. das Lágrimas, 2385 - São João Climaco, São Paulo - SP, 04244-000", tel:"11 99580-2424"},
+  "CEU JAÇANÃ":             {end:"R. Francisca Espósito Tonetti, 105 - Jardim Guapira, São Paulo - SP, 02276-010", tel:"11 91703-5526"},
+  "CEU JAGUARÉ":            {end:"Av. Kenkiti Simomoto, 80 - Jaguaré, São Paulo - SP, 05347-010", tel:"19 97136-4616"},
+  "CEU MENINOS":            {end:"R. Barbinos, 111 - São João Climaco, São Paulo - SP, 04240-110", tel:"11 93370-1340"},
+  "CEU PAULISTANO":         {end:"R. Aparecida do Taboado, S/N - Jardim Paulistano (Zona Norte), São Paulo - SP, 02814-000", tel:"11 91975-3881"},
+  "CEU PAZ":                {end:"Rua Daniel Cerri, 1549 - Jardim Paraná, São Paulo - SP, 02876-170", tel:"11 99962-8251"},
+  "CEU PERAMARMELO":        {end:"Rua Pêra-Marmelo, 226 - Jd. Santa Lucrecia, São Paulo - SP, 05185-420", tel:"11 99959-7839"},
+  "CEU PERUS":              {end:"R. Bernardo José de Lorena, S/N - Vila Fanton, São Paulo - SP, 05203-200", tel:"11 95055-6273"},
+  "CEU PINHEIRINHO":        {end:"Rua Camillo Zanotti - Jaraguá, São Paulo - SP, 02998-080", tel:"11 91975-5565"},
+  "CEU PINHEIRINHO D'ÁGUA": {end:"A completar", tel:"—"},
+  "CEU PQ NOVO MUNDO":      {end:"Av. Ernesto Augusto Lopes, 100 - Parque Vila Maria, São Paulo - SP, 02169-030", tel:"11 91107-1746"},
+  "CEU TAIPAS":             {end:"R. João Amado Coutinho, 240 - Conj. Res. Elisio Teixeira Leite, São Paulo - SP, 02815-000", tel:"11 91975-5790"},
+  "CEU TREMEMBÉ":           {end:"R. Adauto Bezerra Delgado, 94 - Parque Casa de Pedra, São Paulo - SP, 02320-110", tel:"11 99872-1335"},
+  "CEU VILA ALPINA":        {end:"Rua João Pedro Lecór, 144 - Vila Alpina, São Paulo - SP, 03227-190", tel:"11 91776-4115"},
+  "CPFL CAMPINAS":          {end:"R. Jorge de Figueiredo Corrêa, 1632 - Chácara Primavera, Campinas - SP, 13088-140", tel:"19 99787-9789"},
+  "CULT":                   {end:"Rua Três Rios, 343 - Bom Retiro, São Paulo - SP, 01123-000", tel:"11 99599-2887"},
+  "HSPM":                   {end:"R. Castro Alves, 60 - Aclimação, São Paulo - SP, 01532-000", tel:"11 97092-3259"},
+  "IAMSPE":                 {end:"Rua Pedro de Toledo, 1800", tel:"A completar"},
+  "MUSEU DAS FAVELAS":      {end:"Largo Páteo do Colégio, 148 - Centro Histórico de São Paulo, SP", tel:"11 91612-6935"},
+  "POLÍCIA DHPP":           {end:"R. Brg. Tobias, 527 - Luz, São Paulo - SP, 01032-001", tel:"11 99522-4129"},
+  "SALA SÃO PAULO":         {end:"Praça Júlio Prestes, 16 - Campos Elíseos, SP, 01218-020 / Rua Mauá, 51", tel:"11 99607-3583"},
+  "THEATRO MUNICIPAL":      {end:"Praça Ramos de Azevedo, s/n - República, São Paulo - SP, 01037-010", tel:"A completar"},
+};
+
+const equipe = [
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Jéssika",           funcao:"Gestor",      turno:"—",       tel:"11 96173-0753"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Ariane Baccarelli", funcao:"Gestor",      turno:"—",       tel:"11 94968-5224"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Badreddine Fakir",  funcao:"Funcionário", turno:"Noturno", tel:"11 98441-7132"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Wellington Moura",  funcao:"Funcionário", turno:"Noturno", tel:"11 96021-1652"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Robson Soares",     funcao:"Funcionário", turno:"Diurno",  tel:"11 99798-3432"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Vagner Alves",      funcao:"Funcionário", turno:"Diurno",  tel:"11 98517-9761"},
+  {posto:"CEU JAÇANÃ", nome:"Dona Sandra",      funcao:"Gestor",      turno:"—",       tel:"11 98577-7947"},
+  {posto:"CEU JAÇANÃ", nome:"Douglas Pedroso",  funcao:"Funcionário", turno:"Noturno", tel:"11 98340-7265"},
+  {posto:"CEU JAÇANÃ", nome:"Izabelle Brito",   funcao:"Funcionário", turno:"Noturno", tel:"11 98308-6865"},
+  {posto:"CEU JAÇANÃ", nome:"Nelcilio Pires",   funcao:"Funcionário", turno:"Diurno",  tel:"11 98065-8345"},
+  {posto:"CEU JAÇANÃ", nome:"Carlos Eduardo",   funcao:"Funcionário", turno:"Diurno",  tel:"11 96014-3768"},
+  {posto:"CEU TREMEMBÉ", nome:"Dona Sônia",          funcao:"Gestor",      turno:"—",       tel:"11 93086-5437"},
+  {posto:"CEU TREMEMBÉ", nome:"Monique Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 96532-2131"},
+  {posto:"CEU TREMEMBÉ", nome:"Susana Mendonça",     funcao:"Funcionário", turno:"Noturno", tel:"11 95692-3423"},
+  {posto:"CEU TREMEMBÉ", nome:"João Marinho",        funcao:"Funcionário", turno:"Noturno", tel:"11 95371-5810"},
+  {posto:"CEU TREMEMBÉ", nome:"Thiago Macedo",       funcao:"Funcionário", turno:"Noturno", tel:"11 98403-5097"},
+  {posto:"CEU TREMEMBÉ", nome:"Gilvan Lopes",        funcao:"Funcionário", turno:"Diurno",  tel:"11 96320-8094"},
+  {posto:"CEU TREMEMBÉ", nome:"Noildon Santos",      funcao:"Funcionário", turno:"Diurno",  tel:"11 96693-1097"},
+  {posto:"CEU TAIPAS", nome:"Dona Olivia",        funcao:"Gestor",      turno:"—",       tel:"11 97215-5259"},
+  {posto:"CEU TAIPAS", nome:"Silvia Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 98612-3256"},
+  {posto:"CEU TAIPAS", nome:"Diego Souza",        funcao:"Funcionário", turno:"Noturno", tel:"11 92663-2897"},
+  {posto:"CEU TAIPAS", nome:"Claudionor Santos",  funcao:"Funcionário", turno:"Noturno", tel:"11 96976-7374"},
+  {posto:"CEU TAIPAS", nome:"Anderson Brito",     funcao:"Funcionário", turno:"Diurno",  tel:"11 96523-0428"},
+  {posto:"CEU TAIPAS", nome:"Lucas Lopes",        funcao:"Funcionário", turno:"Diurno",  tel:"11 99192-8289"},
+  {posto:"CEU PAULISTANO", nome:"Evandro",          funcao:"Gestor",      turno:"—",       tel:"11 99163-4992"},
+  {posto:"CEU PAULISTANO", nome:"Geni Aparecida",   funcao:"Funcionário", turno:"Noturno", tel:"11 98874-3063"},
+  {posto:"CEU PAULISTANO", nome:"Elias Costa",      funcao:"Funcionário", turno:"Noturno", tel:"11 94022-9241"},
+  {posto:"CEU PAULISTANO", nome:"André Malta",      funcao:"Funcionário", turno:"Diurno",  tel:"11 94741-3164"},
+  {posto:"CEU PAULISTANO", nome:"Jeremias Rocha",   funcao:"Funcionário", turno:"Diurno",  tel:"11 98876-0472"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Dona Solange",       funcao:"Gestor",      turno:"—",       tel:"11 99734-6928"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Antony Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 91700-0136"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"João Blask",         funcao:"Funcionário", turno:"Noturno", tel:"11 97098-9650"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Mario Luiz",         funcao:"Funcionário", turno:"Noturno", tel:"11 94612-8613"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Elaine Azevedo",     funcao:"Funcionário", turno:"Diurno",  tel:"11 95424-0464"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Gabriel Camargo",    funcao:"Funcionário", turno:"Diurno",  tel:"11 97653-7838"},
+];
+
+const sel = document.getElementById('sel-posto');
+Object.keys(postos).sort().forEach(p => {
+  const o = document.createElement('option');
+  o.value = p; o.textContent = p;
+  sel.appendChild(o);
+});
+
+function filtraPosto() {
+  const p = document.getElementById('sel-posto').value;
+  const card = document.getElementById('info-card');
+  if (p && postos[p]) {
+    document.getElementById('info-end').textContent = postos[p].end;
+    document.getElementById('info-tel').textContent = postos[p].tel;
+    card.classList.add('show');
+  } else {
+    card.classList.remove('show');
+  }
+  filtraTabela();
+}
+
+function filtraTabela() {
+  const posto  = document.getElementById('sel-posto').value;
+  const funcao = document.getElementById('sel-funcao').value;
+  const turno  = document.getElementById('sel-turno').value;
+  const tbody  = document.getElementById('tbody');
+  const stats  = document.getElementById('stats');
+
+  let dados = equipe.filter(r => {
+    if (posto  && r.posto  !== posto)  return false;
+    if (funcao && r.funcao !== funcao) return false;
+    if (turno  && r.turno  !== turno)  return false;
+    return true;
+  });
+
+  if (dados.length > 0) {
+    stats.style.display = 'flex';
+    document.getElementById('stat-total').textContent    = dados.length;
+    document.getElementById('stat-gestores').textContent = dados.filter(r => r.funcao === 'Gestor').length;
+    document.getElementById('stat-diurno').textContent   = dados.filter(r => r.turno  === 'Diurno').length;
+    document.getElementById('stat-noturno').textContent  = dados.filter(r => r.turno  === 'Noturno').length;
+  } else {
+    stats.style.display = 'none';
+  }
+
+  if (dados.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5">
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 15s1.5-2 4-2 4 2 4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        <p>Nenhum registro encontrado para os filtros selecionados.</p>
+      </div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = dados.map(r => {
+    const bfunc = r.funcao === 'Gestor'
+      ? '<span class="badge badge-gestor">Gestor(a)</span>'
+      : '<span class="badge badge-noturno">Funcionário(a)</span>';
+    const bturno = r.turno === 'Diurno'
+      ? '<span class="badge badge-diurno">Diurno</span>'
+      : r.turno === 'Noturno'
+        ? '<span class="badge badge-noturno">Noturno</span>'
+        : '<span style="color:#aaa;font-size:12px">—</span>';
+    return `<tr>
+      <td class="nome-cell">${r.nome}</td>
+      <td class="posto-cell">${r.posto}</td>
+      <td>${bfunc}</td>
+      <td>${bturno}</td>
+      <td class="tel-cell">${r.tel}</td>
+    </tr>`;
+  }).join('');
+}
+
+function resetFiltros() {
+  document.getElementById('sel-posto').value  = '';
+  document.getElementById('sel-funcao').value = '';
+  document.getElementById('sel-turno').value  = '';
+  document.getElementById('info-card').classList.remove('show');
+  document.getElementById('stats').style.display = 'none';
+  filtraTabela();
+}
+
+filtraTabela();
+</script>
+</body>
+</html>
