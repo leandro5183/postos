@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestores dos Postos — Sempre Vidas</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f4f6fb; color: #1a1a2e; min-height: 100vh; }
+  header { background: linear-gradient(135deg, #1F3864, #2E75B6); color: white; padding: 24px 32px; display: flex; align-items: center; gap: 14px; }
+  header svg { width: 36px; height: 36px; opacity: 0.9; }
+  header h1 { font-size: 22px; font-weight: 700; }
+  header p { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+  .filters-row { display: flex; gap: 14px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-group { flex: 1; min-width: 160px; }
+  .filter-group label { display: block; font-size: 11px; font-weight: 700; color: #2E75B6; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  select { width: 100%; padding: 10px 14px; border: 1.5px solid #d0daea; border-radius: 8px; background: white; color: #1a1a2e; font-size: 14px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%232E75B6' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  select:focus { outline: none; border-color: #2E75B6; box-shadow: 0 0 0 3px rgba(46,117,182,0.12); }
+  .info-card { background: white; border: 1.5px solid #d0daea; border-left: 4px solid #2E75B6; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; display: none; flex-wrap: wrap; gap: 32px; }
+  .info-card.show { display: flex; }
+  .info-item { display: flex; align-items: flex-start; gap: 10px; }
+  .info-icon { width: 32px; height: 32px; border-radius: 8px; background: #EBF3FC; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .info-label { font-size: 11px; color: #7a8eaa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .info-val { font-size: 14px; color: #1a1a2e; margin-top: 2px; line-height: 1.4; }
+  .stats { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: white; border: 1px solid #e8eef6; border-radius: 8px; padding: 10px 16px; font-size: 13px; color: #4a5a72; }
+  .stat strong { color: #1F3864; font-size: 18px; display: block; }
+  .table-wrap { background: white; border-radius: 12px; border: 1px solid #d0daea; overflow: hidden; box-shadow: 0 2px 8px rgba(31,56,100,0.06); }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: #1F3864; }
+  th { color: white; font-size: 12px; font-weight: 600; text-align: left; padding: 13px 16px; letter-spacing: 0.4px; text-transform: uppercase; }
+  td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #edf1f7; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f6f9fd; }
+  .nome-cell { font-weight: 600; color: #1F3864; cursor: pointer; }
+  .nome-cell:hover { color: #2E75B6; text-decoration: underline; }
+  .posto-cell { color: #5a6e8a; font-size: 12px; }
+  .tel-cell { color: #2E75B6; font-weight: 500; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .badge-gestor    { background: #EDE9FC; color: #4C35A5; }
+  .badge-diurno    { background: #E3F5D8; color: #2D6A0A; }
+  .badge-noturno   { background: #E0EDF9; color: #0C4E8C; }
+  .badge-func      { background: #F0F4FA; color: #3A4F6E; }
+  .badge-folguista { background: #FFF0DC; color: #8A4F00; }
+  .badge-ferista   { background: #FFE8F0; color: #8A0040; }
+  .badge-desligado { background: #FFE0E0; color: #8A0000; }
+  tr.desligado td { background: #fff5f5; }
+  tr.desligado .nome-cell { text-decoration: line-through; color: #cc0000; }
+  .btn-reset { background: none; border: 1.5px solid #d0daea; border-radius: 8px; padding: 9px 16px; font-size: 13px; color: #5a6e8a; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; align-self: flex-end; }
+  .btn-reset:hover { border-color: #2E75B6; color: #2E75B6; }
+  footer { text-align: center; padding: 24px; font-size: 12px; color: #aab4c4; }
+  @media (max-width: 640px) { .filters-row { flex-direction: column; } .info-card.show { flex-direction: column; gap: 14px; } }
+
+  /* MODAL */
+  .modal-bg { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
+  .modal-bg.show { display: flex; }
+  .modal { background: white; border-radius: 14px; padding: 28px; width: 90%; max-width: 460px; position: relative; border-top: 4px solid #2E75B6; max-height: 90vh; overflow-y: auto; }
+  .modal-close { position: absolute; top:14px; right:16px; background:none; border:none; font-size:22px; cursor:pointer; color:#aaa; }
+  .modal-close:hover { color:#333; }
+  .modal-nome { font-size: 20px; font-weight: 700; color: #1F3864; margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: #7a8eaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 18px; }
+  .modal-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid #edf1f7; }
+  .modal-row:last-of-type { border-bottom: none; }
+  .modal-lbl { font-size: 11px; font-weight: 700; color: #7a8eaa; text-transform: uppercase; min-width: 80px; }
+  .modal-val { font-size: 14px; color: #1a1a2e; font-weight: 500; }
+  .modal-divider { border: none; border-top: 1.5px solid #edf1f7; margin: 18px 0 14px; }
+  .modal-section-title { font-size: 11px; font-weight: 700; color: #2E75B6; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
+  .modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .btn-action { width: 100%; padding: 10px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-desl   { background: #FFE0E0; color: #8A0000; }
+  .btn-desl:hover { background: #ffcaca; }
+  .btn-reati  { background: #E3F5D8; color: #2D6A0A; }
+  .btn-reati:hover { background: #d0edbe; }
+  .btn-transfer { background: #EBF3FC; color: #1F3864; }
+  .btn-transfer:hover { background: #d5e8f8; }
+  .senha-box { background: #f8fafd; border: 1.5px solid #d0daea; border-radius: 10px; padding: 14px; margin-top: 10px; display: none; }
+  .senha-box label { font-size: 11px; font-weight: 700; color: #5a6e8a; text-transform: uppercase; display: block; margin-bottom: 6px; }
+  .senha-box input { width: 100%; padding: 9px 12px; border: 1.5px solid #d0daea; border-radius: 7px; font-size: 14px; text-align: center; letter-spacing: 4px; margin-bottom: 8px; }
+  .senha-box input:focus { outline: none; border-color: #2E75B6; }
+  .senha-err { color: #cc0000; font-size: 12px; text-align: center; margin-bottom: 6px; display: none; }
+  .btn-confirmar { width: 100%; padding: 9px; border-radius: 7px; border: none; background: #1F3864; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .btn-confirmar:hover { background: #2E75B6; }
+  .transfer-form { display: none; margin-top: 4px; }
+  .transfer-form select { margin-bottom: 8px; }
+  .transfer-form .row2 { display: flex; gap: 8px; }
+  .transfer-form .row2 select { flex: 1; }
+</style>
+</head>
+<body>
+<header>
+  <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+  <div><h1>Gestores dos Postos</h1><p>Sempre Vidas — Consulta de equipes, turnos e contatos</p></div>
+</header>
+<div class="container">
+  <div class="filters-row">
+    <div class="filter-group"><label>Posto</label><select id="sel-posto" onchange="filtraPosto()"><option value="">— Selecione um posto —</option></select></div>
+    <div class="filter-group"><label>Função</label><select id="sel-funcao" onchange="filtraTabela()"><option value="">Todos</option><option value="Gestor">Gestores</option><option value="Funcionário">Funcionários</option><option value="Folguista">Folguistas</option><option value="Ferista">Feristas</option></select></div>
+    <div class="filter-group"><label>Turno</label><select id="sel-turno" onchange="filtraTabela()"><option value="">Todos os turnos</option><option value="Diurno">Diurno</option><option value="Noturno">Noturno</option></select></div>
+    <button class="btn-reset" onclick="resetFiltros()">↺ Limpar</button>
+  </div>
+  <div class="info-card" id="info-card">
+    <div class="info-item">
+      <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#2E75B6" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div><div class="info-label">Endereço</div><div class="info-val" id="info-end">—</div></div>
+    </div>
+    <div class="info-item">
+      <div class="info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#2E75B6" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.03 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+      <div><div class="info-label">Tel. Corporativo</div><div class="info-val" id="info-tel">—</div></div>
+    </div>
+  </div>
+  <div class="stats" id="stats" style="display:none">
+    <div class="stat"><strong id="st-total">0</strong>Total</div>
+    <div class="stat"><strong id="st-gest">0</strong>Gestores</div>
+    <div class="stat"><strong id="st-diur">0</strong>Diurno</div>
+    <div class="stat"><strong id="st-notu">0</strong>Noturno</div>
+    <div class="stat"><strong id="st-folg">0</strong>Folguistas</div>
+    <div class="stat"><strong id="st-feri">0</strong>Feristas</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Nome</th><th>Posto</th><th>Função</th><th>Turno</th><th>Telefone</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="fecharBg(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal()">×</button>
+    <div class="modal-nome" id="m-nome"></div>
+    <div class="modal-sub" id="m-sub"></div>
+    <div class="modal-row"><span class="modal-lbl">Função</span><span class="modal-val" id="m-funcao"></span></div>
+    <div class="modal-row"><span class="modal-lbl">Turno</span><span class="modal-val" id="m-turno"></span></div>
+    <div class="modal-row"><span class="modal-lbl">Telefone</span><span class="modal-val" id="m-tel"></span></div>
+
+    <hr class="modal-divider">
+    <div class="modal-section-title">⚙️ Ações (requer senha)</div>
+    <div class="modal-actions">
+      <button class="btn-action btn-desl" id="btn-desl" onclick="mostrarSenha('desl')">🔴 Marcar como desligado</button>
+      <button class="btn-action btn-transfer" onclick="mostrarSenha('transfer')">🔄 Transferir de posto / turno</button>
+    </div>
+
+    <!-- Caixa de senha -->
+    <div class="senha-box" id="senha-box">
+      <label>Senha de acesso</label>
+      <input type="password" id="campo-senha" placeholder="••••" onkeydown="if(event.key==='Enter')confirmar()">
+      <div class="senha-err" id="senha-err">Senha incorreta. Tente novamente.</div>
+      <button class="btn-confirmar" onclick="confirmar()">Confirmar</button>
+    </div>
+
+    <!-- Formulário de transferência -->
+    <div class="transfer-form" id="transfer-form">
+      <div class="modal-section-title" style="margin-top:14px">Novo posto e turno</div>
+      <select id="novo-posto"></select>
+      <div class="row2">
+        <select id="novo-turno">
+          <option value="—">Sem turno definido</option>
+          <option value="Diurno">Diurno</option>
+          <option value="Noturno">Noturno</option>
+        </select>
+        <select id="nova-funcao">
+          <option value="Gestor">Gestor(a)</option>
+          <option value="Funcionário">Funcionário(a)</option>
+          <option value="Folguista">Folguista</option>
+          <option value="Ferista">Ferista</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Sempre Vidas · Atualizado em maio de 2025</footer>
+
+<script>
+const SENHA = "9090";
+
+const postos = {
+  "ARQUIVO":                {end:"R. Voluntários da Pátria, 596 - Santana, SP, 02010-000", tel:"11 91297-7538"},
+  "BSP BARRA FUNDA":        {end:"R. do Bosque, 1260 - Barra Funda, SP, 01136-001", tel:"11 96374-8401"},
+  "BSP HABITAT":            {end:"Av. Angélica, 2529 - Bela Vista, SP, 01227-200", tel:"11 91897-5874"},
+  "CENTRAL TÉCNICA":        {end:"Rua Pascoal Ranieri, 75 - Canindé, SP, 03034-060", tel:"—"},
+  "CEU ANHAGUERA":          {end:"R. Pedro José de Lima, 1020 - Anhanguera, SP, 05267-174", tel:"11 91552-9536"},
+  "CEU ATLÂNTICO":          {end:"R. Cel. José Venâncio Dias, 840 - Vila Jaraguá, SP, 05160-030", tel:"11 97318-0434"},
+  "CEU BRISTOL":            {end:"R. Prof. Artur Primavesi - Parque Bristol, SP, 04177-070", tel:"11 93467-8653"},
+  "CEU FREGUESIA DO Ó":     {end:"R. Crespo de Carvalho, 71 - Freguesia do Ó, SP, 02832-240", tel:"11 91975-5510"},
+  "CEU HELIÓPOLIS":         {end:"Estr. das Lágrimas, 2385 - São João Climaco, SP, 04244-000", tel:"11 99580-2424"},
+  "CEU JAÇANÃ":             {end:"R. Francisca Espósito Tonetti, 105 - Jardim Guapira, SP, 02276-010", tel:"11 91703-5526"},
+  "CEU JAGUARÉ":            {end:"Av. Kenkiti Simomoto, 80 - Jaguaré, SP, 05347-010", tel:"19 97136-4616"},
+  "CEU MENINOS":            {end:"R. Barbinos, 111 - São João Climaco, SP, 04240-110", tel:"11 93370-1340"},
+  "CEU PAULISTANO":         {end:"R. Aparecida do Taboado, S/N - Jardim Paulistano, SP, 02814-000", tel:"11 91975-3881"},
+  "CEU PAZ":                {end:"Rua Daniel Cerri, 1549 - Jardim Paraná, SP, 02876-170", tel:"11 99962-8251"},
+  "CEU PERAMARMELO":        {end:"Rua Pêra-Marmelo, 226 - Jd. Santa Lucrecia, SP, 05185-420", tel:"11 99959-7839"},
+  "CEU PERUS":              {end:"R. Bernardo José de Lorena, S/N - Vila Fanton, SP, 05203-200", tel:"11 95055-6273"},
+  "CEU PINHEIRINHO":        {end:"Rua Camillo Zanotti - Jaraguá, SP, 02998-080", tel:"11 91975-5565"},
+  "CEU PINHEIRINHO D'ÁGUA": {end:"A completar", tel:"—"},
+  "CEU PQ NOVO MUNDO":      {end:"Av. Ernesto Augusto Lopes, 100 - Parque Vila Maria, SP, 02169-030", tel:"11 91107-1746"},
+  "CEU TAIPAS":             {end:"R. João Amado Coutinho, 240 - Conj. Res. Elisio Teixeira Leite, SP, 02815-000", tel:"11 91975-5790"},
+  "CEU TREMEMBÉ":           {end:"R. Adauto Bezerra Delgado, 94 - Parque Casa de Pedra, SP, 02320-110", tel:"11 99872-1335"},
+  "CEU VILA ALPINA":        {end:"Rua João Pedro Lecór, 144 - Vila Alpina, SP, 03227-190", tel:"11 91776-4115"},
+  "CPFL CAMPINAS":          {end:"R. Jorge de Figueiredo Corrêa, 1632 - Chácara Primavera, Campinas, 13088-140", tel:"19 99787-9789"},
+  "CULT":                   {end:"Rua Três Rios, 343 - Bom Retiro, SP, 01123-000", tel:"11 99599-2887"},
+  "HSPM":                   {end:"R. Castro Alves, 60 - Aclimação, SP, 01532-000", tel:"11 97092-3259"},
+  "IAMSPE":                 {end:"Rua Pedro de Toledo, 1800", tel:"A completar"},
+  "MUSEU DAS FAVELAS":      {end:"Largo Páteo do Colégio, 148 - Centro Histórico, SP", tel:"11 91612-6935"},
+  "POLÍCIA DHPP":           {end:"R. Brg. Tobias, 527 - Luz, SP, 01032-001", tel:"11 99522-4129"},
+  "SALA SÃO PAULO":         {end:"Praça Júlio Prestes, 16 - Campos Elíseos / Rua Mauá, 51, SP", tel:"11 99607-3583"},
+  "THEATRO MUNICIPAL":      {end:"Praça Ramos de Azevedo, s/n - República, SP, 01037-010", tel:"A completar"},
+};
+
+let equipe = [
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Jéssika",           funcao:"Gestor",      turno:"—",       tel:"11 96173-0753"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Ariane Baccarelli", funcao:"Gestor",      turno:"—",       tel:"11 94968-5224"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Badreddine Fakir",  funcao:"Funcionário", turno:"Noturno", tel:"11 98441-7132"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Wellington Moura",  funcao:"Funcionário", turno:"Noturno", tel:"11 96021-1652"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Robson Soares",     funcao:"Funcionário", turno:"Diurno",  tel:"11 99798-3432"},
+  {posto:"CEU PINHEIRINHO D'ÁGUA", nome:"Vagner Alves",      funcao:"Funcionário", turno:"Diurno",  tel:"11 98517-9761"},
+  {posto:"CEU JAÇANÃ", nome:"Dona Sandra",      funcao:"Gestor",      turno:"—",       tel:"11 98577-7947"},
+  {posto:"CEU JAÇANÃ", nome:"Douglas Pedroso",  funcao:"Funcionário", turno:"Noturno", tel:"11 98340-7265"},
+  {posto:"CEU JAÇANÃ", nome:"Izabelle Brito",   funcao:"Funcionário", turno:"Noturno", tel:"11 98308-6865"},
+  {posto:"CEU JAÇANÃ", nome:"Nelcilio Pires",   funcao:"Funcionário", turno:"Diurno",  tel:"11 98065-8345"},
+  {posto:"CEU JAÇANÃ", nome:"Carlos Eduardo",   funcao:"Funcionário", turno:"Diurno",  tel:"11 96014-3768"},
+  {posto:"CEU TREMEMBÉ", nome:"Dona Sônia",          funcao:"Gestor",      turno:"—",       tel:"11 93086-5437"},
+  {posto:"CEU TREMEMBÉ", nome:"Monique Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 96532-2131"},
+  {posto:"CEU TREMEMBÉ", nome:"Susana Mendonça",     funcao:"Funcionário", turno:"Noturno", tel:"11 95692-3423"},
+  {posto:"CEU TREMEMBÉ", nome:"João Marinho",        funcao:"Funcionário", turno:"Noturno", tel:"11 95371-5810"},
+  {posto:"CEU TREMEMBÉ", nome:"Thiago Macedo",       funcao:"Funcionário", turno:"Noturno", tel:"11 98403-5097"},
+  {posto:"CEU TREMEMBÉ", nome:"Gilvan Lopes",        funcao:"Funcionário", turno:"Diurno",  tel:"11 96320-8094"},
+  {posto:"CEU TREMEMBÉ", nome:"Noildon Santos",      funcao:"Funcionário", turno:"Diurno",  tel:"11 96693-1097"},
+  {posto:"CEU TAIPAS", nome:"Dona Olivia",        funcao:"Gestor",      turno:"—",       tel:"11 97215-5259"},
+  {posto:"CEU TAIPAS", nome:"Silvia Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 98612-3256"},
+  {posto:"CEU TAIPAS", nome:"Diego Souza",        funcao:"Funcionário", turno:"Noturno", tel:"11 92663-2897"},
+  {posto:"CEU TAIPAS", nome:"Claudionor Santos",  funcao:"Funcionário", turno:"Noturno", tel:"11 96976-7374"},
+  {posto:"CEU TAIPAS", nome:"Anderson Brito",     funcao:"Funcionário", turno:"Diurno",  tel:"11 96523-0428"},
+  {posto:"CEU TAIPAS", nome:"Lucas Lopes",        funcao:"Funcionário", turno:"Diurno",  tel:"11 99192-8289"},
+  {posto:"CEU PAULISTANO", nome:"Evandro",          funcao:"Gestor",      turno:"—",       tel:"11 99163-4992"},
+  {posto:"CEU PAULISTANO", nome:"Geni Aparecida",   funcao:"Funcionário", turno:"Noturno", tel:"11 98874-3063"},
+  {posto:"CEU PAULISTANO", nome:"Elias Costa",      funcao:"Funcionário", turno:"Noturno", tel:"11 94022-9241"},
+  {posto:"CEU PAULISTANO", nome:"André Malta",      funcao:"Funcionário", turno:"Diurno",  tel:"11 94741-3164"},
+  {posto:"CEU PAULISTANO", nome:"Jeremias Rocha",   funcao:"Funcionário", turno:"Diurno",  tel:"11 98876-0472"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Dona Solange",       funcao:"Gestor",      turno:"—",       tel:"11 99734-6928"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Antony Baccarelli",  funcao:"Gestor",      turno:"—",       tel:"11 91700-0136"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"João Blask",         funcao:"Funcionário", turno:"Noturno", tel:"11 97098-9650"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Mario Luiz",         funcao:"Funcionário", turno:"Noturno", tel:"11 94612-8613"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Elaine Azevedo",     funcao:"Funcionário", turno:"Diurno",  tel:"11 95424-0464"},
+  {posto:"CEU FREGUESIA DO Ó", nome:"Gabriel Camargo",    funcao:"Funcionário", turno:"Diurno",  tel:"11 97653-7838"},
+  {posto:"CEU PERUS", nome:"Adriana",   funcao:"Gestor",      turno:"—",       tel:"11 98575-1725"},
+  {posto:"CEU PERUS", nome:"Leonardo",  funcao:"Funcionário", turno:"Diurno",  tel:"11 99219-4797"},
+  {posto:"CEU PERUS", nome:"Júlio",     funcao:"Funcionário", turno:"Diurno",  tel:"11 98456-7977"},
+  {posto:"CEU PERUS", nome:"Erisvan",   funcao:"Funcionário", turno:"Noturno", tel:"11 96710-5875"},
+  {posto:"CEU PERUS", nome:"Aquino",    funcao:"Funcionário", turno:"Noturno", tel:"11 96152-3328"},
+  {posto:"CEU JAGUARÉ", nome:"Paloma",          funcao:"Gestor",      turno:"—",       tel:"11 97381-1645"},
+  {posto:"CEU JAGUARÉ", nome:"Lucas Quintino",  funcao:"Funcionário", turno:"Diurno",  tel:"11 99483-5852"},
+  {posto:"CEU JAGUARÉ", nome:"William",         funcao:"Funcionário", turno:"Diurno",  tel:"11 95108-6459"},
+  {posto:"CEU JAGUARÉ", nome:"Ivan",            funcao:"Funcionário", turno:"Noturno", tel:"11 98379-6118"},
+  {posto:"CEU JAGUARÉ", nome:"Osias",           funcao:"Funcionário", turno:"Noturno", tel:"11 99689-8278"},
+  {posto:"CEU PERAMARMELO", nome:"Hélio",    funcao:"Gestor",      turno:"—",       tel:"11 97077-7487"},
+  {posto:"CEU PERAMARMELO", nome:"Édson",    funcao:"Funcionário", turno:"Diurno",  tel:"11 93913-2662"},
+  {posto:"CEU PERAMARMELO", nome:"Claudia",  funcao:"Funcionário", turno:"Diurno",  tel:"11 96568-2503"},
+  {posto:"CEU PERAMARMELO", nome:"Fernando", funcao:"Funcionário", turno:"Noturno", tel:"11 91322-9034"},
+  {posto:"CEU PERAMARMELO", nome:"Viera",    funcao:"Funcionário", turno:"Noturno", tel:"11 97610-8515"},
+  {posto:"CEU ATLÂNTICO", nome:"Isamara",   funcao:"Gestor",      turno:"—",       tel:"11 98383-8979"},
+  {posto:"CEU ATLÂNTICO", nome:"Aleandro",  funcao:"Funcionário", turno:"Diurno",  tel:"11 98958-8405"},
+  {posto:"CEU ATLÂNTICO", nome:"Gabriel",   funcao:"Funcionário", turno:"Diurno",  tel:"11 94070-8621"},
+  {posto:"CEU ATLÂNTICO", nome:"Flaudimir", funcao:"Funcionário", turno:"Noturno", tel:"11 98015-2969"},
+  {posto:"CEU ATLÂNTICO", nome:"Milton",    funcao:"Funcionário", turno:"Noturno", tel:"11 93144-1466"},
+  {posto:"CEU ANHAGUERA", nome:"Alice",     funcao:"Gestor",      turno:"—",       tel:"11 96666-3219"},
+  {posto:"CEU ANHAGUERA", nome:"Dalton",    funcao:"Funcionário", turno:"Diurno",  tel:"11 95705-6464"},
+  {posto:"CEU ANHAGUERA", nome:"Márcio",    funcao:"Funcionário", turno:"Diurno",  tel:"11 96666-2955"},
+  {posto:"CEU ANHAGUERA", nome:"Osmando",   funcao:"Funcionário", turno:"Noturno", tel:"11 98963-2161"},
+  {posto:"CEU ANHAGUERA", nome:"Cristiane", funcao:"Funcionário", turno:"Noturno", tel:"11 96037-5956"},
+  {posto:"CEU PAZ", nome:"Mauricio",   funcao:"Gestor",      turno:"—",       tel:"11 98373-8169"},
+  {posto:"CEU PAZ", nome:"Wellington", funcao:"Funcionário", turno:"Diurno",  tel:"11 96796-0023"},
+  {posto:"CEU PAZ", nome:"Cristiano",  funcao:"Funcionário", turno:"Diurno",  tel:"11 97365-0378"},
+  {posto:"CEU PAZ", nome:"Raphael",    funcao:"Funcionário", turno:"Noturno", tel:"11 98569-0902"},
+  {posto:"CEU PAZ", nome:"Mônica",     funcao:"Funcionário", turno:"Noturno", tel:"11 95277-2086"},
+  {posto:"CEU MENINOS", nome:"Dona Sônia",      funcao:"Gestor",      turno:"—",       tel:"11 98918-6248"},
+  {posto:"CEU MENINOS", nome:"Alex Miller",     funcao:"Funcionário", turno:"Diurno",  tel:"11 98182-4759"},
+  {posto:"CEU MENINOS", nome:"Fernando César",  funcao:"Funcionário", turno:"Diurno",  tel:"11 96354-4561"},
+  {posto:"CEU MENINOS", nome:"Letícia",         funcao:"Funcionário", turno:"Noturno", tel:"11 94861-8546"},
+  {posto:"CEU MENINOS", nome:"José Wilson",     funcao:"Funcionário", turno:"Noturno", tel:"11 98244-4291"},
+  {posto:"CEU HELIÓPOLIS", nome:"Claudinha",     funcao:"Gestor",      turno:"—",       tel:"11 98418-0249"},
+  {posto:"CEU HELIÓPOLIS", nome:"Talita",        funcao:"Funcionário", turno:"Diurno",  tel:"11 95719-1747"},
+  {posto:"CEU HELIÓPOLIS", nome:"Ricardo Alves", funcao:"Funcionário", turno:"Diurno",  tel:"11 99226-9630"},
+  {posto:"CEU HELIÓPOLIS", nome:"Jackson",       funcao:"Funcionário", turno:"Noturno", tel:"11 96235-5484"},
+  {posto:"CEU HELIÓPOLIS", nome:"Thiago Reis",   funcao:"Funcionário", turno:"Noturno", tel:"11 99506-5273"},
+  {posto:"CEU BRISTOL", nome:"Andréia",       funcao:"Gestor",      turno:"—",       tel:"11 98932-0606"},
+  {posto:"CEU BRISTOL", nome:"Fábio",         funcao:"Funcionário", turno:"Diurno",  tel:"11 91423-4382"},
+  {posto:"CEU BRISTOL", nome:"Everlando",     funcao:"Funcionário", turno:"Diurno",  tel:"11 96492-2891"},
+  {posto:"CEU BRISTOL", nome:"Marco Aurélio", funcao:"Funcionário", turno:"Noturno", tel:"11 94719-7234"},
+  {posto:"CEU BRISTOL", nome:"Luciano",       funcao:"Funcionário", turno:"Noturno", tel:"11 94156-0945"},
+  {posto:"CEU VILA ALPINA", nome:"Roberto",    funcao:"Gestor",      turno:"—",       tel:"11 98081-1327"},
+  {posto:"CEU VILA ALPINA", nome:"Elisângela", funcao:"Funcionário", turno:"Diurno",  tel:"11 94804-1371"},
+  {posto:"CEU VILA ALPINA", nome:"Alexandre",  funcao:"Funcionário", turno:"Diurno",  tel:"11 95126-0833"},
+  {posto:"CEU VILA ALPINA", nome:"Caio",       funcao:"Funcionário", turno:"Noturno", tel:"11 98392-9962"},
+  {posto:"CEU VILA ALPINA", nome:"Alexsandre", funcao:"Funcionário", turno:"Noturno", tel:"11 94008-5741"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Jandira",          funcao:"Gestor",      turno:"—",       tel:"11 98785-6860"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Eduardo",          funcao:"Gestor",      turno:"—",       tel:"11 96751-3716"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"William",          funcao:"Funcionário", turno:"Diurno",  tel:"11 96034-4998"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Gilson",           funcao:"Funcionário", turno:"Diurno",  tel:"11 96083-6942"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Daniel Gonçalves", funcao:"Funcionário", turno:"Noturno", tel:"11 96524-1501"},
+  {posto:"CEU PQ NOVO MUNDO", nome:"Alexsander",       funcao:"Funcionário", turno:"Noturno", tel:"11 97716-7283"},
+  {posto:"FOLGUISTAS", nome:"Lucas Moreno", funcao:"Folguista", turno:"Diurno",  tel:"11 97295-5587"},
+  {posto:"FOLGUISTAS", nome:"Renato",       funcao:"Folguista", turno:"Noturno", tel:"11 95444-869"},
+  {posto:"FOLGUISTAS", nome:"Diogenes",     funcao:"Folguista", turno:"—",       tel:"11 95989-5629"},
+  {posto:"FERISTAS", nome:"Gilmara",  funcao:"Ferista", turno:"—", tel:"11 96509-6732"},
+  {posto:"FERISTAS", nome:"Andressa", funcao:"Ferista", turno:"—", tel:"11 97788-9783"},
+];
+
+// Carregar alterações salvas
+const salvo = JSON.parse(localStorage.getItem('sv_alteracoes') || '{}');
+equipe = equipe.map((r, i) => salvo[i] ? {...r, ...salvo[i]} : r);
+
+let modalIdx = -1;
+let acaoPendente = null;
+
+// Popular select de postos
+const sel = document.getElementById('sel-posto');
+[...Object.keys(postos).sort(), "FOLGUISTAS", "FERISTAS"].forEach(p => {
+  const o = document.createElement('option');
+  o.value = p; o.textContent = p; sel.appendChild(o);
+});
+
+// Popular select novo posto no transfer
+const selNovoPosto = document.getElementById('novo-posto');
+[...Object.keys(postos).sort(), "FOLGUISTAS", "FERISTAS"].forEach(p => {
+  const o = document.createElement('option');
+  o.value = p; o.textContent = p; selNovoPosto.appendChild(o);
+});
+
+function salvarAlteracoes() {
+  const obj = {};
+  equipe.forEach((r, i) => {
+    const orig = [
+      {posto:"CEU PINHEIRINHO D'ÁGUA",nome:"Jéssika",funcao:"Gestor",turno:"—"},
+    ];
+    obj[i] = {posto: r.posto, funcao: r.funcao, turno: r.turno, desligado: r.desligado || false};
+  });
+  localStorage.setItem('sv_alteracoes', JSON.stringify(obj));
+}
+
+function filtraPosto() {
+  const p = document.getElementById('sel-posto').value;
+  const card = document.getElementById('info-card');
+  if (p && postos[p]) {
+    document.getElementById('info-end').textContent = postos[p].end;
+    document.getElementById('info-tel').textContent = postos[p].tel;
+    card.classList.add('show');
+  } else { card.classList.remove('show'); }
+  filtraTabela();
+}
+
+function filtraTabela() {
+  const posto  = document.getElementById('sel-posto').value;
+  const funcao = document.getElementById('sel-funcao').value;
+  const turno  = document.getElementById('sel-turno').value;
+  const tbody  = document.getElementById('tbody');
+  const stats  = document.getElementById('stats');
+
+  let dados = equipe.map((r,i) => ({...r, idx:i})).filter(r => {
+    if (posto  && r.posto  !== posto)  return false;
+    if (funcao && r.funcao !== funcao) return false;
+    if (turno  && r.turno  !== turno)  return false;
+    return true;
+  }).sort((a,b) => a.nome.localeCompare(b.nome, 'pt'));
+
+  if (dados.length > 0) {
+    stats.style.display = 'flex';
+    document.getElementById('st-total').textContent = dados.length;
+    document.getElementById('st-gest').textContent  = dados.filter(r => r.funcao==='Gestor').length;
+    document.getElementById('st-diur').textContent  = dados.filter(r => r.turno==='Diurno').length;
+    document.getElementById('st-notu').textContent  = dados.filter(r => r.turno==='Noturno').length;
+    document.getElementById('st-folg').textContent  = dados.filter(r => r.funcao==='Folguista').length;
+    document.getElementById('st-feri').textContent  = dados.filter(r => r.funcao==='Ferista').length;
+  } else { stats.style.display = 'none'; }
+
+  if (!dados.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#8a9bb5">Nenhum registro encontrado.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dados.map(r => {
+    const desl = r.desligado;
+    const bfunc = r.funcao==='Gestor' ? '<span class="badge badge-gestor">Gestor(a)</span>'
+                : r.funcao==='Folguista' ? '<span class="badge badge-folguista">Folguista</span>'
+                : r.funcao==='Ferista' ? '<span class="badge badge-ferista">Ferista</span>'
+                : '<span class="badge badge-func">Funcionário(a)</span>';
+    const bturno = r.turno==='Diurno' ? '<span class="badge badge-diurno">Diurno</span>'
+                 : r.turno==='Noturno' ? '<span class="badge badge-noturno">Noturno</span>'
+                 : '<span style="color:#aaa;font-size:12px">—</span>';
+    const dBadge = desl ? ' <span class="badge badge-desligado">Desligado</span>' : '';
+    return `<tr class="${desl?'desligado':''}">
+      <td class="nome-cell" onclick="abrirModal(${r.idx})">${r.nome}${dBadge}</td>
+      <td class="posto-cell">${r.posto}</td>
+      <td>${bfunc}</td>
+      <td>${bturno}</td>
+      <td class="tel-cell">${r.tel}</td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirModal(idx) {
+  const r = equipe[idx];
+  modalIdx = idx;
+  acaoPendente = null;
+  document.getElementById('m-nome').textContent  = r.nome;
+  document.getElementById('m-sub').textContent   = r.posto;
+  document.getElementById('m-funcao').textContent = r.funcao;
+  document.getElementById('m-turno').textContent  = r.turno === '—' ? 'Não definido' : r.turno;
+  document.getElementById('m-tel').textContent    = r.tel;
+  // Botão desligar/reativar
+  const btnDesl = document.getElementById('btn-desl');
+  btnDesl.textContent = r.desligado ? '✅ Reativar funcionário' : '🔴 Marcar como desligado';
+  btnDesl.className   = r.desligado ? 'btn-action btn-reati' : 'btn-action btn-desl';
+  // Reset
+  document.getElementById('senha-box').style.display = 'none';
+  document.getElementById('transfer-form').style.display = 'none';
+  document.getElementById('campo-senha').value = '';
+  document.getElementById('senha-err').style.display = 'none';
+  // Pre-select novo posto
+  document.getElementById('novo-posto').value  = r.posto;
+  document.getElementById('novo-turno').value  = r.turno;
+  document.getElementById('nova-funcao').value = r.funcao;
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function mostrarSenha(acao) {
+  acaoPendente = acao;
+  const sb = document.getElementById('senha-box');
+  const tf = document.getElementById('transfer-form');
+  sb.style.display = 'block';
+  tf.style.display = acao === 'transfer' ? 'block' : 'none';
+  document.getElementById('campo-senha').value = '';
+  document.getElementById('senha-err').style.display = 'none';
+  document.getElementById('campo-senha').focus();
+}
+
+function confirmar() {
+  const val = document.getElementById('campo-senha').value;
+  const err = document.getElementById('senha-err');
+  if (val !== SENHA) {
+    err.style.display = 'block';
+    document.getElementById('campo-senha').value = '';
+    document.getElementById('campo-senha').focus();
+    return;
+  }
+  err.style.display = 'none';
+  if (acaoPendente === 'desl') {
+    equipe[modalIdx].desligado = !equipe[modalIdx].desligado;
+  } else if (acaoPendente === 'transfer') {
+    equipe[modalIdx].posto  = document.getElementById('novo-posto').value;
+    equipe[modalIdx].turno  = document.getElementById('novo-turno').value;
+    equipe[modalIdx].funcao = document.getElementById('nova-funcao').value;
+  }
+  salvarAlteracoes();
+  fecharModal();
+  filtraTabela();
+}
+
+function fecharModal() {
+  document.getElementById('modal-bg').classList.remove('show');
+}
+function fecharBg(e) {
+  if (e.target.id === 'modal-bg') fecharModal();
+}
+
+function resetFiltros() {
+  document.getElementById('sel-posto').value  = '';
+  document.getElementById('sel-funcao').value = '';
+  document.getElementById('sel-turno').value  = '';
+  document.getElementById('info-card').classList.remove('show');
+  document.getElementById('stats').style.display = 'none';
+  filtraTabela();
+}
+
+filtraTabela();
+</script>
+</body>
+</html>
